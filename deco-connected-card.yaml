@@ -1,0 +1,84 @@
+square: false
+columns: 1
+type: grid
+cards:
+  - type: entity
+    entity: device_tracker.office_deco
+    attribute: ip
+    state_color: true
+    icon: mdi:access-point-network
+    name: Office Deco (5 + 2.4)
+  - type: custom:auto-entities
+    filter:
+      include:
+        - attributes:
+            deco_device: Office
+            connection_type: band5
+          options:
+            secondary: >-
+              {{ as_timestamp(states[config.entity].last_changed)|
+              timestamp_custom('%X - %D') + "  [" + state_attr(config.entity,
+              'mac') + "]"}}
+            state: '{{state_attr(config.entity, ''ip'')}}'
+            style: |
+              :host { 
+                {% if is_state('this.entity_id', 'not_home') %} 
+                  color: yellow
+                {% else %}
+                  color: white
+                {% endif %} 
+              }
+            type: custom:template-entity-row
+      exclude: []
+    show_empty: true
+    card:
+      type: entities
+      style: |
+        :host { 
+          {% if is_state('this.entity_id', 'not_home') %} 
+            color: yellow
+          {% else %}
+           color: white
+          {% endif %} 
+        }
+    sort:
+      method: state
+      ip: true
+      numeric: true
+  - type: custom:auto-entities
+    filter:
+      include:
+        - attributes:
+            deco_device: Office
+            connection_type: band2_4
+          options:
+            secondary: >-
+              {{ as_timestamp(states[config.entity].last_changed)|
+              timestamp_custom('%X - %D') + "  [" + state_attr(config.entity,
+              'mac') + "]"}}
+            state: '{{state_attr(config.entity, ''ip'')}}'
+            style: |
+              :host { 
+                {% if is_state('this.entity_id', 'not_home') %} 
+                  color: yellow
+                {% else %}
+                  color: white
+                {% endif %} 
+              }
+            type: custom:template-entity-row
+      exclude: []
+    show_empty: true
+    card:
+      type: entities
+      style: |
+        :host { 
+          {% if is_state('this.entity_id', 'not_home') %} 
+            color: red
+          {% else %}
+           color: white 
+          {% endif %} 
+        }
+    sort:
+      method: state
+      ip: true
+      numeric: true
