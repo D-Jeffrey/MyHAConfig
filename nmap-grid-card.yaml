@@ -1,0 +1,47 @@
+square: false
+columns: 1
+type: grid
+cards:
+  - type: markdown
+    content: using Nmap
+    title: Network mapping
+  - type: custom:auto-entities
+    filter:
+      include:
+        - entity_id: device_tracker.*
+          options:
+            secondary: '{{ "[" + state_attr(config.entity, ''mac'') + "]"}}'
+            state: '{{state_attr(config.entity, ''ip'')}}'
+            style: |
+              :host { 
+                {% if is_state('this.entity_id', 'not_home') %} 
+                  color: yellow
+                {% elif is_state('this.entity_id', 'unavailable') %} 
+                  color: red
+                {% elif is_state('this.entity_id', 'unknown') %} 
+                  color: blue
+                {% else %}
+                  color: white
+                {% endif %} 
+              }
+            type: custom:template-entity-row
+      exclude:
+        - attributes:
+            interface: main
+    show_empty: true
+    card:
+      type: entities
+      style: |
+        :host { 
+          {% if is_state('this.entity_id', 'not_home') %} 
+            color: yellow
+          {% if is_state('this.entity_id', 'unavailable') %} 
+            color: red
+          {% else %}
+           color: white
+          {% endif %} 
+        }
+    sort:
+      method: state
+      ip: true
+      numeric: true
