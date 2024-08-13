@@ -1,0 +1,336 @@
+- title: Speed
+    path: speed
+    icon: mdi:speedometer
+    cards:
+      - square: false
+        columns: 1
+        type: grid
+        cards:
+          - type: entity
+            entity: device_tracker.office_deco
+            attribute: ip
+            state_color: true
+            icon: mdi:access-point-network
+            name: Office Deco (5 + 2.4)
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Office
+                    connection_type: band5
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Office
+                    connection_type: band2_4
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+      - square: false
+        columns: 1
+        type: grid
+        cards:
+          - type: entity
+            entity: device_tracker.basement_living_room_deco
+            attribute: ip
+            state_color: true
+            icon: mdi:access-point-network
+            name: Garage Deco (5 + 2.4)
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Garage
+                    connection_type: band5
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Garage
+                    connection_type: band2_4
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+      - square: false
+        columns: 1
+        type: grid
+        cards:
+          - type: entity
+            entity: device_tracker.basement_living_room_deco
+            attribute: ip
+            state_color: true
+            icon: mdi:access-point-network
+            name: Living Room Deco (5 + 2.4)
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Living Room
+                    connection_type: band5
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Living Room
+                    connection_type: band2_4
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+      - type: vertical-stack
+        cards:
+          - chart_type: line
+            period: hour
+            type: statistics-graph
+            entities:
+              - sensor.speedtest_download
+              - sensor.total_up
+              - sensor.total_down
+              - sensor.office_down
+              - sensor.office_up
+              - sensor.garage_down
+              - sensor.garage_up
+            stat_types:
+              - mean
+              - min
+              - max
+            title: Fast & SpeedTest - 7 days
+            logarithmic_scale: false
+            hide_legend: false
+            days_to_show: 7
+            unit: Mbit/s
+          - type: entity
+            entity: sensor.uptime
+      - square: false
+        columns: 1
+        type: grid
+        cards:
+          - type: entity
+            entity: device_tracker.unknown_7
+            attribute: ip
+            state_color: true
+            icon: mdi:network
+            name: Wired
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    connection_type: wired
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+      - square: false
+        columns: 1
+        type: grid
+        cards:
+          - type: entity
+            entity: device_tracker.basement_living_room_deco
+            attribute: ip
+            state_color: true
+            icon: mdi:access-point-network
+            name: Basement living room Deco (5 + 2.4)
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Basement living room
+                    connection_type: band5
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+          - type: custom:auto-entities
+            filter:
+              include:
+                - attributes:
+                    deco_device: Basement living room
+                    connection_type: band2_4
+                  options:
+                    secondary: >-
+                      {{ as_timestamp(states[config.entity].last_changed)|
+                      timestamp_custom('%m/%d %H:%M') + "  [" +
+                      state_attr(config.entity, 'mac') + "]"}}
+                    state: '{{state_attr(config.entity, "ip")}}'
+                    card_mod:
+                      style: |
+                        :host { 
+                          {% if is_state(config.entity, 'not_home') %} 
+                            color: blue
+                          {% endif %} 
+                        }
+                    type: custom:template-entity-row
+              exclude: []
+            show_empty: true
+            card:
+              type: entities
+            sort:
+              method: state
+              ip: true
+              numeric: true
+    subview: false
+    badges:
+      - type: entity
+        entity: sensor.uptime
+        show_entity_picture: false
+        display_type: complete
+  
