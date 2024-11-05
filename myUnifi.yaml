@@ -1,0 +1,229 @@
+  - type: sections
+    path: NetD
+    max_columns: 4
+    dense_section_placement: true
+    title: NetD
+    icon: mdi:magnify-scan
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Dream Machine SE
+            heading_style: subtitle
+            icon: mdi:switch
+            badges: []
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: device_tracker.dream_machine_se
+                  - entity: sensor.dream_machine_se_state
+                    name: State
+                  - entity: sensor.dream_machine_se_uptime
+                    name: Uptime
+              - type: markdown
+                content: '# - [Unifi Console](https://unifi/network/default/dashboard)'
+              - type: horizontal-stack
+                cards:
+                  - graph: line
+                    type: sensor
+                    entity: sensor.dream_machine_se_cpu_utilization
+                    detail: 1
+                    hours_to_show: 48
+                    name: UniFi Dream SE CPU (48 hours)
+                  - graph: line
+                    type: sensor
+                    entity: sensor.dream_machine_se_memory_utilization
+                    name: UniFi Dream SE Memory (48 hours)
+                    detail: 1
+                    hours_to_show: 48
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - entity: sensor.dream_machine_se_port_8_rx
+                name: Wireless down
+              - entity: sensor.dream_machine_se_port_8_tx
+                name: Wireless up
+              - sensor.dream_machine_se_port_9_rx
+              - sensor.dream_machine_se_port_9_tx
+            stat_types:
+              - mean
+              - min
+              - max
+            title: Traffic
+            hide_legend: false
+            layout_options:
+              grid_columns: 8
+              grid_rows: auto
+            days_to_show: 10
+          - chart_type: line
+            period: 5minute
+            type: statistics-graph
+            entities:
+              - entity: sensor.dream_machine_se_google_wan_latency
+                name: google latency
+              - entity: sensor.dream_machine_se_microsoft_wan_latency
+                name: microsoft latency
+              - entity: sensor.dream_machine_se_cloudflare_wan_latency
+                name: cloudflare latency
+              - sensor.speedtest_ping
+            stat_types:
+              - mean
+              - min
+              - max
+            title: 'Latency '
+            days_to_show: 10
+          - type: entities
+            entities:
+              - entity: sensor.usw_lite_16_poe_cpu_utilization
+                name: CPU utilization
+              - entity: sensor.usw_lite_16_poe_memory_utilization
+                name: Memory utilization
+              - entity: sensor.usw_lite_16_poe_state
+                name: State
+              - entity: sensor.usw_lite_16_poe_uplink_mac
+                name: Uplink MAC
+              - entity: sensor.usw_lite_16_poe_uptime
+                name: Uptime
+              - device_tracker.usw_lite_16_poe
+            title: USW-Lite-16-PoE
+          - type: entities
+            entities:
+              - update.dream_machine_se
+              - update.usw_lite_16_poe
+              - update.usw_flex_mini
+              - update.u7_pro
+              - update.u7_pro_2
+          - type: vertical-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: sensor.dream_machine_se_uptime
+                    secondary_info: none
+                  - entity: sensor.usw_flex_mini_uptime
+                  - entity: sensor.u7_pro_uptime
+                  - entity: sensor.u7_pro_uptime_2
+            title: Uptime
+          - chart_type: line
+            period: day
+            type: statistics-graph
+            entities:
+              - sensor.speedtest_download
+            stat_types:
+              - mean
+              - min
+              - max
+            title: SpeedTest
+            logarithmic_scale: false
+            hide_legend: true
+        column_span: 4
+      - type: grid
+        cards:
+          - type: heading
+            heading: Network Device List
+            heading_style: title
+            icon: mdi:console-network
+          - square: false
+            columns: 1
+            type: grid
+            cards:
+              - type: custom:auto-entities
+                filter:
+                  include:
+                    - attributes:
+                        source_type: router
+                      options:
+                        secondary: >-
+                          {% set ip = state_attr(config.entity, 'ip') %} {% set
+                          host = state_attr(config.entity, 'host') %} {% if host
+                          %} {% else %} {% set host = state_attr(config.entity,
+                          'host_name') %} {% if host %} {% else %}  {% set host
+                          = state_attr(config.entity, 'friendly_name') %}  {%
+                          endif %}  {% endif %}
+
+                          {% if ip and host %}
+                            {{ ip }} - {{ host }}
+                          {% elif ip %}
+                            {{ ip }}
+                          {% elif host %}
+                            {{ host }}
+                          {% else %}
+                            -----
+                          {% endif %}
+                        state: >-
+                          {% set oui = state_attr(config.entity, 'oui') %} {%
+                          set essid = state_attr(config.entity, 'essid') %} {%
+                          if oui and essid %}
+                            {{ oui }} ({{ essid }})
+                          {% elif oui %}
+                            {{ oui }}
+                          {% elif essid %}
+                            ({{ essid }})
+                          {% else %}
+                            -----
+                          {% endif %}
+                        card_mod:
+                          style: |
+                            :host { 
+                              {% if is_state(config.entity, 'not_home') %} 
+                                color: blue
+                              {% endif %} 
+                            }
+                        type: custom:template-entity-row
+                  exclude: []
+                show_empty: true
+                card:
+                  type: entities
+                sort:
+                  method: state
+                  ip: true
+                  numeric: false
+                  reverse: false
+                  ignore_case: false
+            layout_options:
+              grid_columns: full
+              grid_rows: auto
+        column_span: 2
+    badges:
+      - type: custom:mushroom-template-badge
+        content: |-
+          {{ expand(integration_entities('unifi'))
+          |selectattr( 'domain', 'eq', 'device_tracker')
+          |rejectattr( 'state', 'eq', 'not_home')
+          |list 
+          |count
+          }}
+        icon: mdi:devices
+        color: blue
+      - type: entity
+        show_name: false
+        show_state: true
+        show_icon: true
+        entity: sensor.dream_machine_se_clients
+        color: ''
+        icon: mdi:television-guide
+      - type: entity
+        show_name: true
+        show_state: true
+        show_icon: true
+        entity: sensor.u7_pro_clients_2
+        color: ''
+        icon: mdi:wifi
+        name: Basement
+      - type: entity
+        show_name: true
+        show_state: true
+        show_icon: true
+        entity: sensor.u7_pro_clients
+        color: ''
+        icon: mdi:wifi-cog
+        name: Main
+      - type: entity
+        show_name: true
+        show_state: true
+        show_icon: true
+        entity: sensor.dream_machine_se_uptime
+        color: ''
+        show_entity_picture: false
+    cards: []
