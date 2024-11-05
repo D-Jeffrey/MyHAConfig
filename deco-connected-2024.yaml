@@ -1,4 +1,4 @@
-- title: Speed
+  - title: Speed
     path: speed
     icon: mdi:speedometer
     cards:
@@ -73,7 +73,7 @@
         type: grid
         cards:
           - type: entity
-            entity: device_tracker.basement_living_room_deco
+            entity: device_tracker.garage_deco
             attribute: ip
             state_color: true
             icon: mdi:access-point-network
@@ -200,6 +200,10 @@
               method: state
               ip: true
               numeric: true
+        visibility:
+          - condition: state
+            entity: Living Room Deco
+            state_not: ''
       - type: vertical-stack
         cards:
           - chart_type: line
@@ -261,76 +265,23 @@
               method: state
               ip: true
               numeric: true
-      - square: false
-        columns: 1
-        type: grid
-        cards:
-          - type: entity
-            entity: device_tracker.basement_living_room_deco
-            attribute: ip
-            state_color: true
-            icon: mdi:access-point-network
-            name: Basement living room Deco (5 + 2.4)
-          - type: custom:auto-entities
-            filter:
-              include:
-                - attributes:
-                    deco_device: Basement living room
-                    connection_type: band5
-                  options:
-                    secondary: >-
-                      {{ as_timestamp(states[config.entity].last_changed)|
-                      timestamp_custom('%m/%d %H:%M') + "  [" +
-                      state_attr(config.entity, 'mac') + "]"}}
-                    state: '{{state_attr(config.entity, "ip")}}'
-                    card_mod:
-                      style: |
-                        :host { 
-                          {% if is_state(config.entity, 'not_home') %} 
-                            color: blue
-                          {% endif %} 
-                        }
-                    type: custom:template-entity-row
-              exclude: []
-            show_empty: true
-            card:
-              type: entities
-            sort:
-              method: state
-              ip: true
-              numeric: true
-          - type: custom:auto-entities
-            filter:
-              include:
-                - attributes:
-                    deco_device: Basement living room
-                    connection_type: band2_4
-                  options:
-                    secondary: >-
-                      {{ as_timestamp(states[config.entity].last_changed)|
-                      timestamp_custom('%m/%d %H:%M') + "  [" +
-                      state_attr(config.entity, 'mac') + "]"}}
-                    state: '{{state_attr(config.entity, "ip")}}'
-                    card_mod:
-                      style: |
-                        :host { 
-                          {% if is_state(config.entity, 'not_home') %} 
-                            color: blue
-                          {% endif %} 
-                        }
-                    type: custom:template-entity-row
-              exclude: []
-            show_empty: true
-            card:
-              type: entities
-            sort:
-              method: state
-              ip: true
-              numeric: true
+      - type: entities
+        entities:
+          - entity: sensor.u7_pro_state
+            name: State
+          - entity: device_tracker.u7_pro
+            name: U7 Pro
+          - entity: sensor.u7_pro_uptime
+            name: Uptime
+        title: U7 Pro
     subview: false
     badges:
       - type: entity
         entity: sensor.uptime
         show_entity_picture: false
         display_type: complete
-  
+      - type: custom:mushroom-template-badge
+        content: ''
+        icon: mdi:mushroom
+        color: red
+        entity: device_tracker.basement_living_room_deco
