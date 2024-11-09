@@ -1,0 +1,51 @@
+type: custom:auto-entities
+filter:
+  include:
+    - attributes:
+        source_type: router
+      options:
+        secondary: >-
+          {% set ip = state_attr(config.entity, 'ip') %} {% set host =
+          state_attr(config.entity, 'host') %} {% if host %} {% else %} {% set
+          host = state_attr(config.entity, 'host_name') %} {% if host %} {% else
+          %}  {% set host = state_attr(config.entity, 'friendly_name') %}  {%
+          endif %}  {% endif %}
+
+          {% if ip and host %}
+            {{ ip }} - {{ host }}
+          {% elif ip %}
+            {{ ip }}
+          {% elif host %}
+            {{ host }}
+          {% else %}
+            -----
+          {% endif %}
+        state: >-
+          {% set oui = state_attr(config.entity, 'oui') %} {% set essid =
+          state_attr(config.entity, 'essid') %} {% if oui and essid %}
+            {{ oui }} ({{ essid }})
+          {% elif oui %}
+            {{ oui }}
+          {% elif essid %}
+            ({{ essid }})
+          {% else %}
+            -----
+          {% endif %}
+        card_mod:
+          style: |
+            :host { 
+              {% if is_state(config.entity, 'not_home') %} 
+                color: blue
+              {% endif %} 
+            }
+        type: custom:template-entity-row
+  exclude: []
+show_empty: true
+card:
+  type: entities
+sort:
+  method: state
+  ip: true
+  numeric: false
+  reverse: false
+  ignore_case: false
