@@ -1,0 +1,186 @@
+                          {{ as_timestamp(states[config.entity].last_changed)|
+                          timestamp_custom('%m/%d %H:%M') + "  [" +
+                          state_attr(config.entity, 'mac') + "]"}}
+                          
+              ================================================
+      - type: markdown
+        content: >-
+              
+              {% macro display_attributes(entity_id) %} {% set entity =
+              states[entity_id] %}### {{ entity_id }} {% if entity %} {% for
+              attr, value in entity.attributes.items() %}
+                   {{ attr }}: {{ value }} {% endfor %}  {% else %}    Entity {{ entity_id }} not found. {% endif %} {% endmacro %}
+              {% set entities = ['sensor.darren_s_eight_sleep_side_bed_state',
+              'sensor.darren_s_eight_sleep_side_heart_rate'] %}
+
+
+              {% for entity_id in entities %} 
+                {{ display_attributes(entity_id) }}
+              {% endfor %}
+
+
+              ==================================================
+
+      - type: markdown
+        content: >-
+          # Integration List:
+
+          {% set devices = states | map(attribute='entity_id') |
+          map('device_id') | unique | reject('eq',None) | list %}
+
+          {%- set ns = namespace(integrations = []) %}
+
+          {%- for device in devices if device_attr(device, 'identifiers') %}
+            {%- set ids = device_attr(device, 'identifiers') | list | first %}
+            {%- if ids and ids | length == 2 %}
+              {%- set integration, something_unique = ids %}
+              {%- if integration not in ns.integrations %}
+                {%- set ns.integrations = ns.integrations + [ integration ] %}
+              {%- endif %}
+            {%- endif %}
+          {%- endfor %}
+
+          {% for integration in ns.integrations %}
+            {{integration}}:  {{integration_entities(integration)|count }}
+          {% endfor %}
+
+
+          # Sorted Integration List by count:
+
+          {% set ns = namespace(items = []) %}
+
+          {% for item in  states | map(attribute='entity_id') 
+            | map('device_attr', 'identifiers') | reject('none') 
+            | map('first') | select('defined') 
+            | map(attribute='0') | unique %}
+
+            {% set entities = integration_entities(item) %}
+            {% set ns.items = ns.items + [ { 'integration': item, 'count': entities | count} ] %}
+          {% endfor %}
+
+          {{ ns.items | sort(attribute='count', reverse=true) }}
+
+
+          {% for integration in ns.items| sort(attribute='count', reverse=true)
+          %}
+            {{integration}}
+          {% endfor %}
+      - type: markdown
+        content: |-
+
+          {% set devices = states | map(attribute='entity_id') 
+                                  | map('device_id') | unique 
+                                  | reject('eq',None) | list %}
+
+          {% for device in devices %}
+            
+            {{device_attr(device, 'manufacturer')}}
+            {{device_entities(device)}}
+          {% endfor %}
+
+
+          ====================================================
+      cards:
+      - type: custom:mushroom-chips-card
+        chips:
+          - platform: template
+            sensors:
+              updates_pending:
+                friendly_name: Updates Pending
+                value_template: >-
+                  {{ states.update | selectattr('state', 'eq', 'on') | list |
+                  count }}
+              low_batt_devices:
+                friendly_name: Low Battery Devices
+                value_template: |-
+                  {% set low_batt_device = states.sensor
+                                      | selectattr("entity_id", "search", ".*battery.*") 
+                                      | rejectattr("entity_id", "search", ".*voltage.*")
+                                      | rejectattr("entity_id", "search", "sensor.body*")
+                                      | rejectattr("entity_id", "search", ".*ipad*")
+                                      | rejectattr("entity_id", "search", ".*iphone*")
+                                      | selectattr("state", 'is_number')
+                                      | map(attribute='state')
+                                      | sort(attribute='state', reverse=false)  
+                                      | map('int') 
+                                      | select("lessthan", 50) 
+                                      | list %}
+                  {{ low_batt_devices | count }}
+          - type: conditional
+            conditions:
+              - entity: sensor.low_batt_devices
+                state_not: '0'
+            chip:
+              type: template
+              content: |2
+                          {% if states.sensor.low_batt_devices | int  == 0 %}
+                          keine.
+                          {% elif states.sensor.low_batt_devices | int  > 0 %}
+                          {{  states.sensor.low_batt_devices | int }}.
+                          {% endif %}        
+              icon_color: red
+              icon: mdi:battery-alert-variant-outline
+              tap_action:
+                action: navigate
+                navigation_path: /lovelace-details/batteries
+          - type: conditional
+            conditions:
+              - entity: sensor.updates_pending
+                state_not: '0'
+            chip:
+              type: template
+              content: |-
+                {% if  states.sensor.updates_pending | int == 0 %}
+                keins.
+                {% elif  states.sensor.updates_pending | int > 0 %}
+                {{ states.sensor.updates_pending | int }} updates.
+                {% endif %}
+              icon: mdi:cellphone-arrow-down
+              icon_color: red
+              tap_action:
+                action: navigate
+
+====================================================
+
+              Front: {{
+              (states.sensor.fordpass_tirePressure.attributes.FRONT_LEFT / 6.89)
+              | round(0) }} {{
+              (states.sensor.fordpass_tirePressure.attributes.FRONT_RIGHT /
+              6.89) | round(0) }} 
+               Back: {{ (states.sensor.fordpass_tirePressure.attributes.REAR_LEFT / 6.89) | round(0) }} {{ (states.sensor.fordpass_tirePressure.attributes.REAR_RIGHT / 6.89) | round(0) }} 
+
+
+====================================================
+          - type: horizontal-stack
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: numeric_state
+                    entity: sensor.flightradar24_current_in_area
+                    above: 0
+                card:
+                  type: markdown
+                  content: >-
+                    <Table> {% set data =
+                    state_attr('sensor.flightradar24_current_in_area',
+                    'flights') %} {% for flight in data %}
+                      <TR><TD><ha-icon icon="mdi:airplane"></ha-icon>{{ flight.flight_number }}({{ flight.aircraft_registration }}) <br> {{ flight.airline_short }} - {{ flight.aircraft_model }} <br>
+                      {{ flight.airport_origin_city }}{%if flight.airport_origin_city %}<img src="https://flagsapi.com/{{ flight.airport_origin_country_code }}/shiny/16.png" title='{{ flight.airport_origin_country_name }}'/>{% endif %} -> {{ flight.airport_destination_city }}{%
+                      if flight.airport_destination_country_code %}<img src="https://flagsapi.com/{{ flight.airport_destination_country_code }}/shiny/16.png" title='{{ flight.airport_destination_country_name }}'/>{% endif %}
+                       <br>
+                      {%if flight.time_scheduled_departure %}Departure - {{ flight.time_scheduled_departure | timestamp_custom('%H:%M') }}; {% endif %}{%if flight.time_scheduled_arrival%}Arrival - {{ flight.time_scheduled_arrival | timestamp_custom('%H:%M') }}{% endif %}  <br>
+                      Altitude - {{ flight.altitude }} ft{%if flight.altitude > 0 %} ({{(flight.altitude * 0.3048)| round(0)}} m){% endif%}; Gr. speed - {{ flight.ground_speed }} kts{%if flight.ground_speed > 0 %} ({{(flight.ground_speed * 1.852)| round(0)}} km/h){% endif%}
+                      </TD><TD>
+                        {% if flight.aircraft_photo_small %}
+                      <img src='{{flight.aircraft_photo_small}}'/>
+                      {% endif %}
+                      </TD></TR>
+                      {% endfor %}
+                      </TABLE>
+                visibility:
+                  - condition: state
+                    entity: sensor.flightradar24_current_in_area
+                    state_not: ''
+            layout_options:
+              grid_columns: 6
+              grid_rows: auto               
