@@ -1,0 +1,31 @@
+# Integration List:
+{% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
+{%- set ns = namespace(integrations = []) %}
+{%- for device in devices if device_attr(device, 'identifiers') %}
+  {%- set ids = device_attr(device, 'identifiers') | list | first %}
+  {%- if ids and ids | length == 2 %}
+    {%- set integration, something_unique = ids %}
+    {%- if integration not in ns.integrations %}
+      {%- set ns.integrations = ns.integrations + [ integration ] %}
+    {%- endif %}
+  {%- endif %}
+{%- endfor %}
+{% for integration in ns.integrations %}
+  {{integration}}:  {{integration_entities(integration)|count }}
+{% endfor %}
+
+# Sorted Integration List by count:
+{% set ns = namespace(items = []) %}
+{% for item in  states | map(attribute='entity_id') 
+  | map('device_attr', 'identifiers') | reject('none') 
+  | map('first') | select('defined') 
+  | map(attribute='0') | unique %}
+
+  {% set entities = integration_entities(item) %}
+  {% set ns.items = ns.items + [ { 'integration': item, 'count': entities | count} ] %}
+{% endfor %}
+{{ ns.items | sort(attribute='count', reverse=true) }}
+
+{% for integration in ns.items| sort(attribute='count', reverse=true) %}
+  {{integration}}
+{% endfor %}
