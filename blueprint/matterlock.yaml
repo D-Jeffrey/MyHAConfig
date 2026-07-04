@@ -5,18 +5,14 @@ blueprint:
     Automatically finds next free user slot and credential index.
   domain: automation
 
-    input:
-      target_lock:
-        name: Matter Lock
-        description: Select a Matter Door Lock device
-        selector:
-          device:
-            filter:
-              - integration: matter
-                manufacturer: "*"
-                model: "*"
-                entities:
-                  - domain: lock
+  input:
+    target_lock:
+      name: Lock
+      description: Select your Matter lock
+      selector:
+        device:
+          filter:
+            - integration: matter
 
 
     action_type:
