@@ -13,6 +13,8 @@ blueprint:
         device:
           filter:
             - integration: matter
+              manufacturer: "*"
+              model: "*"
               entities:
                 - domain: lock
 
