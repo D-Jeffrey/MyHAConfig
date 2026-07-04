@@ -1,0 +1,124 @@
+blueprint:
+  name: Matter Lock PIN Manager
+  description: >
+    Add, update, remove, or clear PIN codes on any Matter-enabled lock
+    supporting the Door Lock User Management cluster.
+  domain: automation
+  input:
+    target_lock:
+      name: Lock
+      description: Select your Matter lock
+      selector:
+        device:
+          filter:
+            - integration: matter
+
+    action_type:
+      name: Action
+      description: What do you want to do
+      selector:
+        select:
+          options:
+            - add_pin
+            - update_pin
+            - delete_pin
+            - clear_all_pins
+
+    user_index:
+      name: User Index
+      description: User slot (1–10 or as supported)
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+    credential_index:
+      name: Credential Index
+      description: Credential slot (PIN index)
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+    pin_code:
+      name: PIN Code
+      description: Required for add/update
+      default: ""
+      selector:
+        text:
+
+mode: single
+
+trigger:
+  - platform: event
+    event_type: matter_lock_pin_manager.run
+
+action:
+  - choose:
+
+      # ADD PIN
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == 'add_pin' }}"
+        sequence:
+          - service: matter.set_lock_credential
+            data:
+              credential_type: pin
+              credential_index: "{{ credential_index }}"
+              user_type: unrestricted_user
+              user_status: occupied_enabled
+              credential_data: "{{ pin_code }}"
+            target:
+              device_id: "{{ target_lock }}"
+
+      # UPDATE PIN
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == 'update_pin' }}"
+        sequence:
+          - service: matter.set_lock_credential
+            data:
+              credential_type: pin
+              credential_index: "{{ credential_index }}"
+              user_type: unrestricted_user
+              user_status: occupied_enabled
+              credential_data: "{{ pin_code }}"
+            target:
+              device_id: "{{ target_lock }}"
+
+      # DELETE PIN
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == 'delete_pin' }}"
+        sequence:
+          - service: matter.set_lock_credential
+            data:
+              credential_type: pin
+              credential_index: "{{ credential_index }}"
+              user_type: unrestricted_user
+              user_status: occupied_disabled
+              credential_data: ""
+            target:
+              device_id: "{{ target_lock }}"
+
+      # CLEAR ALL PINS
+      - conditions:
+          - condition: template
+            value_template: "{{ action_type == 'clear_all_pins' }}"
+        sequence:
+          - repeat:
+              count: 50
+              sequence:
+                - service: matter.set_lock_credential
+                  data:
+                    credential_type: pin
+                    credential_index: "{{ repeat.index }}"
+                    user_type: unrestricted_user
+                    user_status: occupied_disabled
+                    credential_data: ""
+                  target:
+                    device_id: "{{ target_lock }}"
