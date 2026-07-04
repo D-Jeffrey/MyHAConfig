@@ -13,10 +13,9 @@ blueprint:
         device:
           filter:
             - integration: matter
-              manufacturer: "*"
-              model: "*"
-              entity:
-                domain: lock
+              entities:
+                - domain: lock
+
 
     action_type:
       name: Action
