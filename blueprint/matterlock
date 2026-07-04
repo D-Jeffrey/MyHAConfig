@@ -1,21 +1,25 @@
 blueprint:
-  name: Matter Lock PIN Manager
+  name: Matter Lock User & PIN Manager
   description: >
-    Add, update, remove, or clear PIN codes on any Matter-enabled lock
-    supporting the Door Lock User Management cluster.
+    Manage users and PIN codes on Matter-enabled locks.
+    Automatically finds next free user slot and credential index.
   domain: automation
+
   input:
     target_lock:
-      name: Lock
-      description: Select your Matter lock
+      name: Matter Lock
+      description: Select a Matter Door Lock device
       selector:
         device:
           filter:
             - integration: matter
+              manufacturer: "*"
+              model: "*"
+              entity:
+                domain: lock
 
     action_type:
       name: Action
-      description: What do you want to do
       selector:
         select:
           options:
@@ -24,40 +28,67 @@ blueprint:
             - delete_pin
             - clear_all_pins
 
-    user_index:
-      name: User Index
-      description: User slot (1–10 or as supported)
-      default: 1
-      selector:
-        number:
-          min: 1
-          max: 50
-          mode: box
-
-    credential_index:
-      name: Credential Index
-      description: Credential slot (PIN index)
-      default: 1
-      selector:
-        number:
-          min: 1
-          max: 50
-          mode: box
-
     pin_code:
-      name: PIN Code
-      description: Required for add/update
+      name: PIN Code (for add/update)
       default: ""
       selector:
         text:
 
 mode: single
 
+variables:
+  device_id: !input target_lock
+  action_type: !input action_type
+  pin_code: !input pin_code
+
 trigger:
   - platform: event
-    event_type: matter_lock_pin_manager.run
+    event_type: matter_lock_user_manager.run
 
 action:
+
+  # Step 1: Get current users
+  - service: matter.get_lock_users
+    target:
+      device_id: "{{ device_id }}"
+    data: {}
+    response_variable: lock_users
+
+  # Step 2: Determine next free user slot
+  - variables:
+      used_user_indices: >
+        {{ lock_users[lock_users.keys()|list|first].users | map(attribute='user_index') | list }}
+      next_user_index: >
+        {% set max_users = lock_users[lock_users.keys()|list|first].max_users %}
+        {% for i in range(1, max_users + 1) %}
+          {% if i not in used_user_indices %}
+            {{ i }}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
+  # Step 3: Determine next free credential index
+  - service: matter.get_lock_info
+    target:
+      device_id: "{{ device_id }}"
+    data: {}
+    response_variable: lock_info
+
+  - variables:
+      max_credentials: "{{ lock_info[lock_info.keys()|list|first].max_credentials_per_user }}"
+      used_credential_indices: >
+        {{ lock_users[lock_users.keys()|list|first].users
+           | map(attribute='credentials')
+           | map('map', attribute='index')
+           | sum(start=[]) }}
+      next_credential_index: >
+        {% for i in range(1, max_credentials + 1) %}
+          {% if i not in used_credential_indices %}
+            {{ i }}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+
   - choose:
 
       # ADD PIN
@@ -66,44 +97,47 @@ action:
             value_template: "{{ action_type == 'add_pin' }}"
         sequence:
           - service: matter.set_lock_credential
+            target:
+              device_id: "{{ device_id }}"
             data:
               credential_type: pin
-              credential_index: "{{ credential_index }}"
+              credential_index: "{{ next_credential_index }}"
               user_type: unrestricted_user
               user_status: occupied_enabled
               credential_data: "{{ pin_code }}"
-            target:
-              device_id: "{{ target_lock }}"
 
-      # UPDATE PIN
+      # UPDATE PIN (overwrite existing credential)
       - conditions:
           - condition: template
             value_template: "{{ action_type == 'update_pin' }}"
         sequence:
           - service: matter.set_lock_credential
+            target:
+              device_id: "{{ device_id }}"
             data:
               credential_type: pin
-              credential_index: "{{ credential_index }}"
+              credential_index: "{{ next_credential_index }}"
               user_type: unrestricted_user
               user_status: occupied_enabled
               credential_data: "{{ pin_code }}"
-            target:
-              device_id: "{{ target_lock }}"
 
       # DELETE PIN
       - conditions:
           - condition: template
             value_template: "{{ action_type == 'delete_pin' }}"
         sequence:
-          - service: matter.set_lock_credential
-            data:
-              credential_type: pin
-              credential_index: "{{ credential_index }}"
-              user_type: unrestricted_user
-              user_status: occupied_disabled
-              credential_data: ""
-            target:
-              device_id: "{{ target_lock }}"
+          - repeat:
+              count: "{{ max_credentials }}"
+              sequence:
+                - service: matter.set_lock_credential
+                  target:
+                    device_id: "{{ device_id }}"
+                  data:
+                    credential_type: pin
+                    credential_index: "{{ repeat.index }}"
+                    user_type: unrestricted_user
+                    user_status: occupied_disabled
+                    credential_data: ""
 
       # CLEAR ALL PINS
       - conditions:
@@ -111,14 +145,14 @@ action:
             value_template: "{{ action_type == 'clear_all_pins' }}"
         sequence:
           - repeat:
-              count: 50
+              count: "{{ max_credentials }}"
               sequence:
                 - service: matter.set_lock_credential
+                  target:
+                    device_id: "{{ device_id }}"
                   data:
                     credential_type: pin
                     credential_index: "{{ repeat.index }}"
                     user_type: unrestricted_user
                     user_status: occupied_disabled
                     credential_data: ""
-                  target:
-                    device_id: "{{ target_lock }}"
